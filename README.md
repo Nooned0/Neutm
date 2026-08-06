@@ -17,6 +17,40 @@ Neutm helps work around these limitations by allowing you to organise your music
 - Supports both GUI and CLI interfaces
 - Designed for physical media such as USB drives and standalone music players
 
+## CLI Commands
+| Option | Description |
+|---|---|
+| `--status` | Show enabled/disabled/mixed status of each folder in the directory |
+| `--enable-folder FOLDER` | Enable all tracks in a folder |
+| `--disable-folder FOLDER` | Disable all tracks in a folder |
+| `--toggle-track TRACK` | Enable/disable a single track |
+| `--enable-all` | Enable every track in the library |
+| `--disable-all` | Disable every track in the library |
+| `--shuffle` | Shuffles the start of the filename so alphabetical players play in random order |
+| `--unshuffle` | Remove shuffle |
+| `--gamble` | Randomly enable/disable folders |
+| `--save-preset NAME` | Save the current enable/disable state as a preset |
+| `--load-preset NAME` | Apply a saved preset |
+| `--list-presets` | List saved presets |
+
+### Examples:
+
+Enable a folder:
+```bash
+neutm /media/USB --enable-folder Track01
+```
+
+Disable everything:
+```bash
+neutm /media/USB --disable-all
+```
+
+Load a playlist setup:
+```bash
+neutm /media/USB --load-preset Playlist4
+```
+
+
 ## Installation
 
 ### Requirements
