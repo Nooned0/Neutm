@@ -28,6 +28,7 @@ try:
         QMessageBox,
         QSizePolicy,
     )
+
     HAS_QT = True
 except ImportError:
     HAS_QT = False
@@ -58,7 +59,8 @@ def is_audio_file(filename):
 
 def get_folders(base_dir="."):
     return sorted(
-        f for f in os.listdir(base_dir)
+        f
+        for f in os.listdir(base_dir)
         if os.path.isdir(os.path.join(base_dir, f)) and not f.startswith(".")
     )
 
@@ -115,6 +117,7 @@ def enable_all(base_dir="."):
         changed += enable_folder(os.path.join(base_dir, folder))
     return changed
 
+
 def disable_all(base_dir="."):
     changed = 0
     for folder in get_folders(base_dir):
@@ -133,7 +136,8 @@ def toggle_track(path):
 
 def gamble(base_dir="."):
     names = [
-        f for f in get_folders(base_dir)
+        f
+        for f in get_folders(base_dir)
         if folder_status(os.path.join(base_dir, f)) != "empty"
     ]
 
@@ -169,7 +173,6 @@ def gamble(base_dir="."):
                 disable_folder(path)
             else:
                 enable_folder(path)
-
 
 
 SHUFFLE_CHARS = string.ascii_letters + string.digits
@@ -339,7 +342,6 @@ STATUS_LABELS = {
 
 
 if HAS_QT:
-
     STATUS_META = {
         "enabled": (STATUS_LABELS["enabled"], QColor("#2e7d32")),
         "disabled": (STATUS_LABELS["disabled"], QColor("#c62828")),
@@ -386,7 +388,9 @@ class SelectorWindow(QMainWindow):
         self.folder_path_label.setStyleSheet("font-weight: bold;")
         root_layout.addWidget(self.folder_path_label)
 
-        subtitle = QLabel("Click a folder to preview its songs. Use the Enable/Disable button to toggle all songs in that folder.")
+        subtitle = QLabel(
+            "Click a folder to preview its songs. Use the Enable/Disable button to toggle all songs in that folder."
+        )
         subtitle.setStyleSheet("color: gray;")
         root_layout.addWidget(subtitle)
 
@@ -425,8 +429,7 @@ class SelectorWindow(QMainWindow):
         shuffle_desc.setWordWrap(True)
         shuffle_desc.setMinimumWidth(0)
         shuffle_desc.setSizePolicy(
-            QSizePolicy.Policy.Ignored,
-            QSizePolicy.Policy.Preferred
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred
         )
         shuffle_layout.addWidget(shuffle_desc)
 
@@ -469,7 +472,6 @@ class SelectorWindow(QMainWindow):
         splitter.setSizes([480, 570])
 
         self.refresh()
-
 
     def log_msg(self, msg):
         self.log.appendPlainText(msg)
@@ -517,8 +519,7 @@ class SelectorWindow(QMainWindow):
         name_label.setStyleSheet(f"color: {color.name()};")
         name_label.setMinimumWidth(0)
         name_label.setSizePolicy(
-            QSizePolicy.Policy.Ignored,
-            QSizePolicy.Policy.Preferred
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred
         )
 
         status_label = QLabel(f"({label_text})")
@@ -529,9 +530,7 @@ class SelectorWindow(QMainWindow):
         )
         toggle_btn.setMinimumWidth(0)
         toggle_btn.setEnabled(status != "empty")
-        toggle_btn.clicked.connect(
-            lambda _checked, f=folder: self.on_toggle_folder(f)
-        )
+        toggle_btn.clicked.connect(lambda _checked, f=folder: self.on_toggle_folder(f))
 
         row_layout.addWidget(name_label, stretch=1)
         row_layout.addWidget(status_label)
@@ -552,7 +551,6 @@ class SelectorWindow(QMainWindow):
                 item.setForeground(QColor(128, 128, 128))
             self.song_list.addItem(item)
         self.toggle_track_btn.setEnabled(False)
-
 
     def on_folder_selected(self, current, _previous):
         if current is None:
@@ -613,7 +611,6 @@ class SelectorWindow(QMainWindow):
         changed = unshuffle_all(self.base_dir)
         self.log_msg(f"Removed shuffle tags from {changed} file(s).")
         self.refresh()
-
 
     def _build_menu_bar(self):
         menu_bar = self.menuBar()
@@ -689,7 +686,9 @@ class SelectorWindow(QMainWindow):
         try:
             preset = load_preset(name, self.base_dir)
         except (OSError, json.JSONDecodeError) as exc:
-            QMessageBox.warning(self, "Load Preset", f"Could not load preset '{name}':\n{exc}")
+            QMessageBox.warning(
+                self, "Load Preset", f"Could not load preset '{name}':\n{exc}"
+            )
             return
         changed, missing = apply_preset(preset, self.base_dir)
         msg = f"Applied preset '{name}': {changed} file(s) changed."
@@ -728,7 +727,9 @@ class SelectorWindow(QMainWindow):
         try:
             preset = import_preset_from_file(path)
         except (OSError, json.JSONDecodeError) as exc:
-            QMessageBox.warning(self, "Import Preset", f"Could not read preset file:\n{exc}")
+            QMessageBox.warning(
+                self, "Import Preset", f"Could not read preset file:\n{exc}"
+            )
             return
         changed, missing = apply_preset(preset, self.base_dir)
         msg = f"Imported preset from '{path}': {changed} file(s) changed."
@@ -737,9 +738,12 @@ class SelectorWindow(QMainWindow):
         self.log_msg(msg)
         self.refresh()
 
-
     def on_change_music_folder(self):
-        start_dir = self.base_dir if os.path.isdir(self.base_dir) else default_browse_start_dir()
+        start_dir = (
+            self.base_dir
+            if os.path.isdir(self.base_dir)
+            else default_browse_start_dir()
+        )
         chosen = QFileDialog.getExistingDirectory(
             self, "Select Music Folder", start_dir
         )
@@ -759,6 +763,7 @@ class SelectorWindow(QMainWindow):
         self.settings.setValue("window_geometry", self.saveGeometry())
         event.accept()
 
+
 def cli():
     parser = argparse.ArgumentParser(
         prog="neutm",
@@ -773,97 +778,63 @@ def cli():
 
         Load a playlist setup:
             neutm /media/USB --load-preset Playlist4
-        """
+        """,
     )
 
-    parser.add_argument(
-        "directory",
-        nargs="?",
-        default=".",
-        help="Music directory"
-    )
+    parser.add_argument("directory", nargs="?", default=".", help="Music directory")
 
     info_group = parser.add_argument_group("Information")
 
     info_group.add_argument(
-        "--status",
-        action="store_true",
-        help="Show folder statuses"
+        "--status", action="store_true", help="Show folder statuses"
     )
-
 
     toggle_group = parser.add_argument_group("Enable/Disable")
 
     toggle_group.add_argument(
-        "--toggle-track",
-        metavar="TRACK",
-        help="Enable/disable a single track"
+        "--toggle-track", metavar="TRACK", help="Enable/disable a single track"
     )
 
     toggle_group.add_argument(
-        "--enable-folder",
-        metavar="FOLDER",
-        help="Enable all tracks in a folder"
+        "--enable-folder", metavar="FOLDER", help="Enable all tracks in a folder"
     )
 
     toggle_group.add_argument(
-        "--disable-folder",
-        metavar="FOLDER",
-        help="Disable all tracks in a folder"
+        "--disable-folder", metavar="FOLDER", help="Disable all tracks in a folder"
     )
 
     toggle_group.add_argument(
-        "--enable-all",
-        action="store_true",
-        help="Enable all disabled tracks"
+        "--enable-all", action="store_true", help="Enable all disabled tracks"
     )
 
     toggle_group.add_argument(
-        "--disable-all",
-        action="store_true",
-        help="Disable all tracks"
+        "--disable-all", action="store_true", help="Disable all tracks"
     )
-
 
     random_group = parser.add_argument_group("Randomisation")
 
     random_group.add_argument(
-        "--shuffle",
-        action="store_true",
-        help="Add random shuffle prefixes"
+        "--shuffle", action="store_true", help="Add random shuffle prefixes"
     )
 
     random_group.add_argument(
-        "--unshuffle",
-        action="store_true",
-        help="Remove shuffle prefixes"
+        "--unshuffle", action="store_true", help="Remove shuffle prefixes"
     )
 
     random_group.add_argument(
-        "--gamble",
-        action="store_true",
-        help="Randomly enable/disable folders"
+        "--gamble", action="store_true", help="Randomly enable/disable folders"
     )
-
 
     preset_group = parser.add_argument_group("Presets")
 
     preset_group.add_argument(
-        "--save-preset",
-        metavar="NAME",
-        help="Save current state as preset"
+        "--save-preset", metavar="NAME", help="Save current state as preset"
     )
 
-    preset_group.add_argument(
-        "--load-preset",
-        metavar="NAME",
-        help="Load a preset"
-    )
+    preset_group.add_argument("--load-preset", metavar="NAME", help="Load a preset")
 
     preset_group.add_argument(
-        "--list-presets",
-        action="store_true",
-        help="List available presets"
+        "--list-presets", action="store_true", help="List available presets"
     )
 
     args = parser.parse_args()
@@ -879,26 +850,21 @@ def cli():
             status = STATUS_LABELS[folder_status(path)].upper()
             print(f"[{status:<8}] {folder}")
 
-
     elif args.enable_all:
         changed = enable_all(base)
         print(f"[OK] Enabled {changed} files")
-
 
     elif args.disable_all:
         changed = disable_all(base)
         print(f"[OK] Disabled {changed} files")
 
-
     elif args.shuffle:
         changed = shuffle_all(base)
         print(f"[OK] Shuffled {changed} files")
 
-
     elif args.unshuffle:
         changed = unshuffle_all(base)
         print(f"[OK] Removed shuffle tags from {changed} files")
-
 
     elif args.toggle_track:
         path = os.path.join(base, args.toggle_track)
@@ -909,7 +875,6 @@ def cli():
 
         new_path = toggle_track(path)
         print(f"[OK] Toggled: {new_path}")
-
 
     elif args.gamble:
         print("Gambling folders...")
@@ -925,7 +890,6 @@ def cli():
         else:
             print("[ERROR] Not enough folders to gamble")
 
-
     elif args.enable_folder:
         folder = os.path.join(base, args.enable_folder)
 
@@ -935,7 +899,6 @@ def cli():
 
         changed = enable_folder(folder)
         print(f"[OK] Enabled {changed} files in '{args.enable_folder}'")
-
 
     elif args.disable_folder:
         folder = os.path.join(base, args.disable_folder)
@@ -947,11 +910,9 @@ def cli():
         changed = disable_folder(folder)
         print(f"[OK] Disabled {changed} files in '{args.disable_folder}'")
 
-
     elif args.save_preset:
         path = save_preset(args.save_preset, base)
         print(f"[OK] Saved preset '{args.save_preset}'")
-
 
     elif args.load_preset:
         try:
@@ -968,7 +929,6 @@ def cli():
         if missing:
             print(f"[WARNING] Missing {len(missing)} tracks")
 
-
     elif args.list_presets:
         presets = list_presets(base)
 
@@ -978,7 +938,6 @@ def cli():
             print("Presets:")
             for preset in presets:
                 print(f"  - {preset}")
-
 
     else:
         parser.print_help()
