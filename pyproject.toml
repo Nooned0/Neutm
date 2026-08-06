@@ -1,0 +1,17 @@
+[project]
+name = "neutm"
+version = "1.0.0"
+description = "A lightweight CLI and GUI music manager for USB music folders"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    {name = "Nooned0"}
+]
+license = {file = "LICENSE"}
+
+dependencies = [
+    "PyQt6"
+]
+
+[project.scripts]
+neutm = "neutm:main"
