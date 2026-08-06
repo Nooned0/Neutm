@@ -6,8 +6,13 @@ Many Physical music players, such as car stereo systems or older USB audio devic
 
 Neutm helps work around these limitations by allowing you to organise your music library by using folders, you can enable or disable sections of your collection or create different music setups without deleting or having to move files.
 
-## Features
+## How it works
+Neutm doesn't move or delete your files, primarily working with filename tricks that USB players will respect.
+- **Enable/Disable**: disabling a track appends `.disable` to its filename (e.g. `song.mp3` -> `song.mp3.disable`). Most players only use known audio extensions, so a `.disable` file will be ignored without deleting the file
+- **Shuffle**: prepends a random 4-character tag to the filename (e.g. `song.mp3` → `[n-aX3f]-song.mp3`). For alphabetical only players which sort only by filename, this command will randomize the playback order.
+- **Presets**: a preset is just a saved snapshot of which tracks were enabled/disabled at a point in time (stored as JSON.)
 
+## Features
 - Enable or disable entire folders of music
 - Split a large music library into sections
 - Toggle individual tracks on or off
@@ -34,7 +39,6 @@ Neutm helps work around these limitations by allowing you to organise your music
 | `--list-presets` | List saved presets |
 
 ### Examples:
-
 Enable a folder:
 ```bash
 neutm /media/USB --enable-folder Track01
@@ -49,7 +53,6 @@ Load a playlist setup:
 ```bash
 neutm /media/USB --load-preset Playlist4
 ```
-
 
 ## Installation
 
