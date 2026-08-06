@@ -1,8 +1,8 @@
 # Neutm
 
-A lightweight CLI/GUI music manager for USB music players.
+A lightweight CLI/GUI tool for managing USB music libraries and improving limited car stereo and MP3 player support
 
-Many Physical music players, such as car stereo systems or older USB audio devices, have limited library management features. Some units may only sort music alphabetically without the ability to shuffle or lack playlist support.
+Many physical music players, such as car stereo systems or older USB audio devices, have limited library management features. Some units may only sort music alphabetically without the ability to shuffle or lack playlist support.
 
 Neutm helps work around these limitations by allowing you to organise your music library by using folders, you can enable or disable sections of your collection or create different music setups without deleting or having to move files.
 
