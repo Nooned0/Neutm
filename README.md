@@ -19,7 +19,7 @@ Neutm doesn't move or delete your files, primarily working with filename tricks 
 <td><img src="assets/neutm-win_mixed.png" alt="Neutm GUI on Windows 10" width="100%"></td>
 </tr>
 </table>
-*Neutm GUI*
+<sub>Neutm GUI</sub>
 
 ## Features
 - Enable or disable entire folders of music
