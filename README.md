@@ -13,10 +13,12 @@ Neutm doesn't move or delete your files, primarily working with filename tricks 
 - **Presets**: a preset is just a saved snapshot of which tracks were enabled/disabled at a point in time (stored as JSON.)
 
 ## Screenshots
-<img src="assets/NeutmS1.png" alt="Neutm GUI on KDE" width="48%" align="left">
-<img src="assets/neutm-win_mixed.png" alt="Neutm GUI on Windows 10" width="48%" align="right">
-<br clear="both">
-
+<table>
+<tr>
+<td><img src="assets/NeutmS1.png" alt="Neutm GUI on KDE" width="100%"></td>
+<td><img src="assets/neutm-win_mixed.png" alt="Neutm GUI on Windows 10" width="100%"></td>
+</tr>
+</table>
 *Neutm GUI*
 
 ## Features
