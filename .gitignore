@@ -1,4 +1,6 @@
 /.presets/
 /build/
 /neutm.egg-info/
-
+/dist/
+/build/
+/.ruff_cache/
