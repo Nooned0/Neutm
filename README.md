@@ -56,12 +56,22 @@ neutm /media/USB --load-preset Playlist4
 
 ## Installation
 
-### Requirements
+### Windows
+
+Download the latest Windows release from the Releases page.
+Extract `Neutm-Windows.zip` and run:
+```text
+Neutm.exe
+```
+
+
+### Install from source
+
+#### Requirements
 
 - Python 3.10 or newer
 - pip
 
-### Install from source
 
 Clone the Neutm repository:
 ```bash
