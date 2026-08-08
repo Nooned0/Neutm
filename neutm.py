@@ -90,6 +90,13 @@ def folder_status(folder):
         return "mixed"
 
 
+def folder_counts(folder):
+    files = get_mp3_files(folder)
+    disabled_count = sum(1 for f in files if is_disabled(f))
+    enabled_count = len(files) - disabled_count
+    return enabled_count, disabled_count
+
+
 def disable_folder(folder):
     changed = 0
     for src in get_mp3_files(folder):
@@ -243,7 +250,8 @@ def canonical_key(path, base_dir="."):
     dirpath, filename = os.path.split(rel)
     filename = strip_disable_suffix(filename)
     filename = strip_shuffle_prefix(filename)
-    return os.path.join(dirpath, filename) if dirpath else filename
+    key = os.path.join(dirpath, filename) if dirpath else filename
+    return key.replace("\\", "/")
 
 
 def build_preset(base_dir="."):
@@ -257,6 +265,7 @@ def build_preset(base_dir="."):
 
 
 def apply_preset(preset, base_dir="."):
+    preset = {k.replace("\\", "/"): v for k, v in preset.items()}
     changed = 0
     seen_keys = set()
     for folder in get_folders(base_dir):
@@ -515,12 +524,27 @@ class SelectorWindow(QMainWindow):
         row_layout.setContentsMargins(8, 4, 8, 4)
         row_layout.setSpacing(6)
 
+        text_col = QVBoxLayout()
+        text_col.setSpacing(0)
+
         name_label = QLabel(folder)
         name_label.setStyleSheet(f"color: {color.name()};")
         name_label.setMinimumWidth(0)
         name_label.setSizePolicy(
             QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred
         )
+        text_col.addWidget(name_label)
+
+        if status != "empty":
+            enabled_count, disabled_count = folder_counts(full_path)
+            total = enabled_count + disabled_count
+            counts_label = QLabel(f"{enabled_count}/{total} enabled")
+            counts_label.setStyleSheet("color: gray; font-size: 11px;")
+            counts_label.setMinimumWidth(0)
+            counts_label.setSizePolicy(
+                QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred
+            )
+            text_col.addWidget(counts_label)
 
         status_label = QLabel(f"({label_text})")
         status_label.setStyleSheet(f"color: {color.name()};")
@@ -532,7 +556,7 @@ class SelectorWindow(QMainWindow):
         toggle_btn.setEnabled(status != "empty")
         toggle_btn.clicked.connect(lambda _checked, f=folder: self.on_toggle_folder(f))
 
-        row_layout.addWidget(name_label, stretch=1)
+        row_layout.addLayout(text_col, stretch=1)
         row_layout.addWidget(status_label)
         row_layout.addWidget(toggle_btn)
 
