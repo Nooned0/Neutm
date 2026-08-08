@@ -16,7 +16,7 @@ Neutm doesn't move or delete your files, primarily working with filename tricks 
 <table>
 <tr>
 <td><img src="assets/neutms2(trackdisplay).png" alt="Neutm GUI on KDE" width="100%"></td>
-<td><img src="assets/neutm-win_mixed.png" alt="Neutm GUI on Windows 10" width="100%"></td>
+<td><img src="assets/neutmwindows2.png" alt="Neutm GUI on Windows 11" width="100%"></td>
 </tr>
 </table>
 <sub>Neutm GUI</sub>
