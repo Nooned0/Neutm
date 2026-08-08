@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "neutm"
 version = "1.0.0"
@@ -8,10 +12,12 @@ authors = [
     {name = "Nooned0"}
 ]
 license = {file = "LICENSE"}
-
 dependencies = [
     "PyQt6"
 ]
 
 [project.scripts]
 neutm = "neutm:main"
+
+[tool.setuptools]
+py-modules = ["neutm"]
