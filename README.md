@@ -12,6 +12,9 @@ Neutm doesn't move or delete your files, primarily working with filename tricks 
 - **Shuffle**: prepends a random 4-character tag to the filename (e.g. `song.mp3` → `[n-aX3f]-song.mp3`). For alphabetical only players which sort only by filename, this command will randomize the playback order.
 - **Presets**: a preset is just a saved snapshot of which tracks were enabled/disabled at a point in time (stored as JSON.)
 
+## Demo
+![Neutm demo](assets/exampleUsage.gif)
+
 ## Screenshots
 <table>
 <tr>
@@ -19,7 +22,7 @@ Neutm doesn't move or delete your files, primarily working with filename tricks 
 <td><img src="assets/neutmwindows2.png" alt="Neutm GUI on Windows 11" width="100%"></td>
 </tr>
 </table>
-<sub>Neutm GUI</sub>
+
 
 ## Features
 - Enable or disable entire folders of music
