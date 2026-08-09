@@ -11,6 +11,7 @@ Neutm doesn't move or delete your files, primarily working with filename tricks 
 - **Enable/Disable**: disabling a track appends `.disable` to its filename (e.g. `song.mp3` -> `song.mp3.disable`). Most players only use known audio extensions, so a `.disable` file will be ignored without deleting the file
 - **Shuffle**: prepends a random 4-character tag to the filename (e.g. `song.mp3` → `[n-aX3f]-song.mp3`). For alphabetical only players which sort only by filename, this command will randomize the playback order.
 - **Presets**: a preset is just a saved snapshot of which tracks were enabled/disabled at a point in time (stored as JSON.)
+- **Export**: copies your currently enabled tracks from every folder into a single destination folder. This is a copy and not a move as your original folders and enable/disable state are untouched.
 
 ## Demo
 ![Neutm demo](assets/exampleUsage.gif)
@@ -29,6 +30,7 @@ Neutm doesn't move or delete your files, primarily working with filename tricks 
 - Split a large music library into sections
 - Toggle individual tracks on or off
 - Create and load playlist presets
+- Export currently enabled songs into a single combined folder
 - Randomly enable and disable folders (Gamble mode)
 - Shuffle the start of the filename for devices that only sort alphabetically
 - Supports both GUI and CLI interfaces
@@ -49,6 +51,7 @@ Neutm doesn't move or delete your files, primarily working with filename tricks 
 | `--save-preset NAME` | Save the current enable/disable state as a preset |
 | `--load-preset NAME` | Apply a saved preset |
 | `--list-presets` | List saved presets |
+| `--export-enabled DEST` | Copy all currently enabled songs from every folder into DEST |
 
 ### Examples:
 Enable a folder:
@@ -65,6 +68,11 @@ Load a playlist setup:
 ```bash
 neutm /media/USB --load-preset Playlist4
 ```
+
+Export all enabled songs into one folder:
+​```bash
+neutm /media/USB --export-enabled /home/user/exported_playlist
+​```
 
 ## Installation
 
