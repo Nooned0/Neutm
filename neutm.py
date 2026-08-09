@@ -6,9 +6,10 @@ import json
 import string
 import random
 import argparse
+import shutil
 
 try:
-    from PyQt6.QtCore import Qt, QSettings
+    from PyQt6.QtCore import Qt, QSettings, QThread, pyqtSignal
     from PyQt6.QtGui import QColor, QAction
     from PyQt6.QtWidgets import (
         QApplication,
@@ -327,6 +328,43 @@ def import_preset_from_file(path):
         return json.load(f)
 
 
+def _unique_dest_path(path):
+    if not os.path.exists(path):
+        return path
+    root, ext = os.path.splitext(path)
+    i = 2
+    while True:
+        candidate = f"{root} ({i}){ext}"
+        if not os.path.exists(candidate):
+            return candidate
+        i += 1
+
+
+def export_enabled_songs(dest_dir, base_dir=".", progress_cb=None):
+    os.makedirs(dest_dir, exist_ok=True)
+    dest_abs = os.path.abspath(dest_dir)
+
+    to_copy = []
+    for folder in get_folders(base_dir):
+        folder_path = os.path.join(base_dir, folder)
+        if os.path.abspath(folder_path) == dest_abs:
+            continue
+        for path in get_mp3_files(folder_path):
+            if not is_disabled(path):
+                to_copy.append(path)
+
+    total = len(to_copy)
+    copied = []
+    for i, path in enumerate(to_copy, start=1):
+        filename = strip_shuffle_prefix(os.path.basename(path))
+        dest_path = _unique_dest_path(os.path.join(dest_dir, filename))
+        shutil.copy2(path, dest_path)
+        copied.append((path, dest_path))
+        if progress_cb:
+            progress_cb(i, total)
+    return copied
+
+
 def default_browse_start_dir():
     candidates = []
     if sys.platform.startswith("linux"):
@@ -357,6 +395,29 @@ if HAS_QT:
         "mixed": (STATUS_LABELS["mixed"], QColor("#b8860b")),
         "empty": (STATUS_LABELS["empty"], QColor(128, 128, 128)),
     }
+
+
+class ExportWorker(QThread):
+    progress = pyqtSignal(int, int)
+    finished_ok = pyqtSignal(list)
+    failed = pyqtSignal(str)
+
+    def __init__(self, dest_dir, base_dir):
+        super().__init__()
+        self.dest_dir = dest_dir
+        self.base_dir = base_dir
+
+    def run(self):
+        try:
+            copied = export_enabled_songs(
+                self.dest_dir, self.base_dir, progress_cb=self._on_progress
+            )
+            self.finished_ok.emit(copied)
+        except OSError as exc:
+            self.failed.emit(str(exc))
+
+    def _on_progress(self, done, total):
+        self.progress.emit(done, total)
 
 
 class SelectorWindow(QMainWindow):
@@ -668,6 +729,12 @@ class SelectorWindow(QMainWindow):
 
         file_menu.addSeparator()
 
+        self.export_songs_action = QAction("Export Enabled Songs to Folder...", self)
+        self.export_songs_action.triggered.connect(self.on_export_enabled_songs)
+        file_menu.addAction(self.export_songs_action)
+
+        file_menu.addSeparator()
+
         quit_action = QAction("Exit", self)
         quit_action.triggered.connect(self.close)
         file_menu.addAction(quit_action)
@@ -761,6 +828,53 @@ class SelectorWindow(QMainWindow):
             msg += f" {len(missing)} track(s) in the preset were not found on disk."
         self.log_msg(msg)
         self.refresh()
+
+    def on_export_enabled_songs(self):
+        dest = QFileDialog.getExistingDirectory(
+            self,
+            "Choose destination folder for enabled songs",
+            default_browse_start_dir(),
+        )
+        if not dest:
+            return
+        if os.path.abspath(dest) == os.path.abspath(self.base_dir):
+            QMessageBox.warning(
+                self,
+                "Export Enabled Songs",
+                "Destination can't be the same as your music root folder.",
+            )
+            return
+
+        self.export_songs_action.setEnabled(False)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        self.log_msg(f"Exporting enabled songs to '{dest}'...")
+
+        self._export_worker = ExportWorker(dest, self.base_dir)
+        self._export_worker.progress.connect(self._on_export_progress)
+        self._export_worker.finished_ok.connect(
+            lambda copied: self._on_export_finished(dest, copied)
+        )
+        self._export_worker.failed.connect(self._on_export_failed)
+        self._export_worker.start()
+
+    def _on_export_progress(self, done, total):
+        self.log_msg(f"Exporting... {done}/{total} song(s) copied.")
+
+    def _on_export_finished(self, dest, copied):
+        QApplication.restoreOverrideCursor()
+        self.export_songs_action.setEnabled(True)
+        self.log_msg(f"Exported {len(copied)} enabled song(s) to '{dest}'.")
+        QMessageBox.information(
+            self,
+            "Export Enabled Songs",
+            f"Copied {len(copied)} enabled song(s) into:\n{dest}",
+        )
+
+    def _on_export_failed(self, message):
+        QApplication.restoreOverrideCursor()
+        self.export_songs_action.setEnabled(True)
+        self.log_msg(f"Export failed: {message}")
+        QMessageBox.warning(self, "Export Enabled Songs", f"Export failed:\n{message}")
 
     def on_change_music_folder(self):
         start_dir = (
@@ -859,6 +973,14 @@ def cli():
 
     preset_group.add_argument(
         "--list-presets", action="store_true", help="List available presets"
+    )
+
+    export_group = parser.add_argument_group("Export")
+
+    export_group.add_argument(
+        "--export-enabled",
+        metavar="DEST",
+        help="Copy all currently-enabled songs (from every folder) flat into DEST",
     )
 
     args = parser.parse_args()
@@ -963,6 +1085,14 @@ def cli():
             for preset in presets:
                 print(f"  - {preset}")
 
+    elif args.export_enabled:
+        dest = args.export_enabled
+        if os.path.abspath(dest) == os.path.abspath(base):
+            print("[ERROR] Destination can't be the same as the music directory")
+            return
+        copied = export_enabled_songs(dest, base)
+        print(f"[OK] Exported {len(copied)} enabled song(s) to '{dest}'")
+
     else:
         parser.print_help()
 
@@ -985,6 +1115,7 @@ def main():
         "--save-preset",
         "--load-preset",
         "--list-presets",
+        "--export-enabled",
     }
 
     if any(arg.startswith("-") and arg in cli_flags for arg in sys.argv):
