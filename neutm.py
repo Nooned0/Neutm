@@ -28,9 +28,13 @@ try:
         QInputDialog,
         QMessageBox,
         QSizePolicy,
+        QTreeWidget,
+        QTreeWidgetItem,
+        QTreeWidgetItemIterator,
     )
 
     HAS_QT = True
+
 except ImportError:
     HAS_QT = False
 
@@ -470,7 +474,9 @@ class SelectorWindow(QMainWindow):
         left_box = QGroupBox("Folders")
         left_layout = QVBoxLayout(left_box)
 
-        self.folder_list = QListWidget()
+        self.folder_list = QTreeWidget()
+        self.folder_list.setHeaderHidden(True)
+        self.folder_list.setIndentation(14)
         self.folder_list.currentItemChanged.connect(self.on_folder_selected)
         left_layout.addWidget(self.folder_list, stretch=1)
 
@@ -552,28 +558,48 @@ class SelectorWindow(QMainWindow):
         selected_folder = None
         current = self.folder_list.currentItem()
         if current:
-            selected_folder = current.data(Qt.ItemDataRole.UserRole)
+            selected_folder = current.data(0, Qt.ItemDataRole.UserRole)
 
         self.folder_list.clear()
-        folders = get_folders(self.base_dir)
+        top_folders = get_folders(self.base_dir)
 
-        if not folders:
+        if not top_folders:
             self.log_msg(f"No folders found in '{self.base_dir}'.")
             return
 
-        select_index = None
-        for i, folder in enumerate(folders):
-            item = QListWidgetItem()
-            item.setData(Qt.ItemDataRole.UserRole, folder)
-            self.folder_list.addItem(item)
-            item.setSizeHint(self.build_folder_row(item, folder).sizeHint())
-            if folder == selected_folder:
-                select_index = i
+        self._add_folder_items(None, "")
+        self.folder_list.expandAll()
 
-        if select_index is not None:
-            self.folder_list.setCurrentRow(select_index)
-        elif self.folder_list.count() > 0:
-            self.folder_list.setCurrentRow(0)
+        item_to_select = (
+            self._find_folder_item(selected_folder) if selected_folder else None
+        )
+        if item_to_select is not None:
+            self.folder_list.setCurrentItem(item_to_select)
+        elif self.folder_list.topLevelItemCount() > 0:
+            self.folder_list.setCurrentItem(self.folder_list.topLevelItem(0))
+
+    def _add_folder_items(self, parent_item, rel_dir):
+        full_dir = os.path.join(self.base_dir, rel_dir) if rel_dir else self.base_dir
+        for name in get_folders(full_dir):
+            rel_path = os.path.join(rel_dir, name) if rel_dir else name
+            item = (
+                QTreeWidgetItem(parent_item)
+                if parent_item is not None
+                else QTreeWidgetItem(self.folder_list)
+            )
+            item.setData(0, Qt.ItemDataRole.UserRole, rel_path)
+            row = self.build_folder_row(item, rel_path)
+            item.setSizeHint(0, row.sizeHint())
+            self._add_folder_items(item, rel_path)
+
+    def _find_folder_item(self, rel_path):
+        iterator = QTreeWidgetItemIterator(self.folder_list)
+        while iterator.value():
+            item = iterator.value()
+            if item.data(0, Qt.ItemDataRole.UserRole) == rel_path:
+                return item
+            iterator += 1
+        return None
 
     def build_folder_row(self, item, folder):
         full_path = os.path.join(self.base_dir, folder)
@@ -588,7 +614,7 @@ class SelectorWindow(QMainWindow):
         text_col = QVBoxLayout()
         text_col.setSpacing(0)
 
-        name_label = QLabel(folder)
+        name_label = QLabel(os.path.basename(folder))
         name_label.setStyleSheet(f"color: {color.name()};")
         name_label.setMinimumWidth(0)
         name_label.setSizePolicy(
@@ -621,7 +647,7 @@ class SelectorWindow(QMainWindow):
         row_layout.addWidget(status_label)
         row_layout.addWidget(toggle_btn)
 
-        self.folder_list.setItemWidget(item, row)
+        self.folder_list.setItemWidget(item, 0, row)
         return row
 
     def show_songs(self, folder):
@@ -641,7 +667,7 @@ class SelectorWindow(QMainWindow):
         if current is None:
             self.song_list.clear()
             return
-        folder = current.data(Qt.ItemDataRole.UserRole)
+        folder = current.data(0, Qt.ItemDataRole.UserRole)
         self.show_songs(folder)
 
     def on_song_selected(self, current, _previous):
