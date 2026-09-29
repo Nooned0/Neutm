@@ -23,7 +23,7 @@ jobs:
 
       - name: Build EXE
         run: |
-          pyinstaller --onefile --name Neutm --collect-all PyQt6 neutm.py
+          pyinstaller --onefile --name Neutm --collect-all PyQt6 --add-data "assets;assets" neutm.py
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4

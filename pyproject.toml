@@ -13,7 +13,8 @@ authors = [
 ]
 license = {file = "LICENSE"}
 dependencies = [
-    "PyQt6"
+    "PyQt6",
+    "mutagen"
 ]
 
 [project.scripts]
@@ -21,3 +22,9 @@ neutm = "neutm:main"
 
 [tool.setuptools]
 py-modules = ["neutm"]
+
+[tool.setuptools.packages.find]
+include = ["assets"]
+
+[tool.setuptools.package-data]
+assets = ["disc.gif"]

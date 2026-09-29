@@ -1,6 +1,8 @@
 /.presets/
 /build/
-/neutm.egg-info/
 /dist/
-/build/
-/.ruff_cache/
+*.egg-info/
+__pycache__/
+.ruff_cache/
+.venv/
+venv/
