@@ -112,7 +112,7 @@ LASTFM_API_URL = "https://ws.audioscrobbler.com/2.0/"
 
 SONG_THUMB = 40
 SONG_VIEWS = (
-    ("default", "Default (file paths)"),
+    ("default", "File paths"),
     ("compact", "Compact (title, artist, time)"),
     ("spaced", "Spaced (with cover art)"),
 )
@@ -121,12 +121,14 @@ SONG_COLUMNS = (
     ("artist", "Artist"),
     ("album", "Album"),
     ("time", "Time"),
+    ("status", "Status"),
     ("path", "File path"),
 )
+SONG_NUMERIC_SORT_COLUMNS = (4, 5)
 SONG_DEFAULT_COLUMNS = {
     "default": ["path"],
-    "compact": ["title", "artist", "time"],
-    "spaced": ["title", "artist", "time"],
+    "compact": ["title", "artist", "time", "status"],
+    "spaced": ["title", "artist", "time", "status"],
 }
 
 
@@ -1267,6 +1269,17 @@ class TagLoadWorker(QThread):
             )
 
 
+class SongTreeWidgetItem(QTreeWidgetItem):
+    def __lt__(self, other):
+        tree = self.treeWidget()
+        column = tree.sortColumn() if tree is not None else 0
+        if column in SONG_NUMERIC_SORT_COLUMNS:
+            left = self.data(column, Qt.ItemDataRole.UserRole) or 0
+            right = other.data(column, Qt.ItemDataRole.UserRole) or 0
+            return left < right
+        return self.text(column).casefold() < other.text(column).casefold()
+
+
 class ClickSlider(QSlider):
     def _value_at(self, pos):
         opt = QStyleOptionSlider()
@@ -1759,9 +1772,9 @@ class SelectorWindow(QMainWindow):
 
         right_layout.addWidget(QLabel("Song list:"))
         self.song_list = QTreeWidget()
-        self.song_list.setColumnCount(6)
+        self.song_list.setColumnCount(7)
         self.song_list.setHeaderLabels(
-            ["", "Title", "Artist", "Album", "Time", "File path"]
+            ["", "Title", "Artist", "Album", "Time", "Status", "File path"]
         )
         self.song_list.setRootIsDecorated(False)
         self.song_list.setItemsExpandable(False)
@@ -1769,9 +1782,10 @@ class SelectorWindow(QMainWindow):
         song_header.setStretchLastSection(False)
         song_header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         self.song_list.setColumnWidth(0, SONG_THUMB + 16)
-        for idx in (1, 2, 3, 5):
+        for idx in (1, 2, 3, 6):
             song_header.setSectionResizeMode(idx, QHeaderView.ResizeMode.Stretch)
-        song_header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        for idx in (4, 5):
+            song_header.setSectionResizeMode(idx, QHeaderView.ResizeMode.ResizeToContents)
         song_header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         song_header.customContextMenuRequested.connect(self.on_song_header_menu)
         self._apply_song_columns()
@@ -1924,10 +1938,14 @@ class SelectorWindow(QMainWindow):
     def _apply_song_columns(self):
         visible = self._visible_song_columns()
         spaced = self.song_view == "spaced"
+        sortable = self.song_view != "default"
         self.song_list.setColumnHidden(0, not spaced)
         for idx, (key, _label) in enumerate(SONG_COLUMNS, start=1):
             self.song_list.setColumnHidden(idx, key not in visible)
-        self.song_list.header().setVisible(self.song_view != "default")
+        self.song_list.header().setVisible(sortable)
+        self.song_list.setSortingEnabled(sortable)
+        if not sortable:
+            self.song_list.header().setSortIndicator(-1, Qt.SortOrder.AscendingOrder)
         side = SONG_THUMB if spaced else 16
         self.song_list.setIconSize(QSize(side, side))
 
@@ -1953,7 +1971,11 @@ class SelectorWindow(QMainWindow):
         item.setText(2, info.get("artist") or "")
         item.setText(3, info.get("album") or "")
         item.setText(4, format_time(duration) if duration else "")
-        item.setText(5, os.path.relpath(path, self.base_dir))
+        item.setData(4, Qt.ItemDataRole.UserRole, duration or 0)
+        disabled = is_disabled(path)
+        item.setText(5, "Disabled" if disabled else "Enabled")
+        item.setData(5, Qt.ItemDataRole.UserRole, 0 if disabled else 1)
+        item.setText(6, os.path.relpath(path, self.base_dir))
         if self.song_view == "spaced":
             item.setSizeHint(0, QSize(SONG_THUMB + 8, SONG_THUMB + 8))
             thumb = info.get("thumb")
@@ -1983,7 +2005,7 @@ class SelectorWindow(QMainWindow):
 
         full_path = os.path.join(self.base_dir, self._song_folder)
         for path in get_mp3_files(full_path):
-            item = QTreeWidgetItem()
+            item = SongTreeWidgetItem()
             item.setData(0, Qt.ItemDataRole.UserRole, path)
             info = self._cached_song_info(path, need_cover) if need_tags else None
             self._fill_song_item(item, path, info)
@@ -2467,7 +2489,7 @@ class SelectorWindow(QMainWindow):
         if self.repeat_mode not in ("off", "all", "one"):
             self.repeat_mode = "off"
 
-        self.song_view = self.settings.value("song_view", "default", type=str)
+        self.song_view = self.settings.value("song_view", "compact", type=str)
         if self.song_view not in dict(SONG_VIEWS):
             self.song_view = "default"
         self.song_columns = {k: list(v) for k, v in SONG_DEFAULT_COLUMNS.items()}
